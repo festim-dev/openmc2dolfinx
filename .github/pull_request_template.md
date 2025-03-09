@@ -4,7 +4,7 @@ Describe the big picture of your changes here to communicate to the maintainers 
 
 ## Types of changes
 
-What types of changes does your code introduce to vtk2dolfinx?
+What types of changes does your code introduce to openmc2dolfinx?
 <!--Put an `x` in the boxes that apply-->
 
 - [ ] Bugfix (non-breaking change which fixes an issue)

@@ -1,2 +1,2 @@
 ignore:
-  - "vtk2dolfinx/_version.py"  # ignore version file
+  - "openmc2dolfinx/_version.py"  # ignore version file

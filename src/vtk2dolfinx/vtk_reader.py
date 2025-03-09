@@ -1,6 +1,7 @@
 import dolfinx
 import pyvista
 
+
 class VTKReader:
     """"""
 
@@ -13,7 +14,6 @@ class StructuredGridReader(VTKReader):
 
     def __init__(self):
         pass
-
 
 
 class UnstructuredMeshReader(VTKReader):

@@ -1,0 +1,2 @@
+ignore:
+  - "vtk2dolfinx/_version.py"  # ignore version file

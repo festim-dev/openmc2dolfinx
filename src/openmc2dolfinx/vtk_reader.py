@@ -108,7 +108,15 @@ class StructuredGridReader:
             point_ids = [cell.GetPointId(j) for j in ordering]  # Extract connectivity
             self.cell_connectivity.append(point_ids)
 
-    def create_dolfinx_function(self):
+    def create_dolfinx_function(self, data: str = "mean"):
+        """reads the filename of the OpenMC file
+
+        args:
+            data: the name of the data to extract from the vtk file
+
+        returns:
+            dolfinx function with openmc results mapped
+        """
         degree = 1  # Set polynomial degree
         cell = ufl.Cell("hexahedron")
         mesh_element = basix.ufl.element(
@@ -124,7 +132,7 @@ class StructuredGridReader:
         function_space = dolfinx.fem.functionspace(self.dolfinx_mesh, ("DG", 0))
         u = dolfinx.fem.Function(function_space)
 
-        u.x.array[:] = self.grid.cell_data["mean"][
+        u.x.array[:] = self.grid.cell_data[f"{data}"][
             self.dolfinx_mesh.topology.original_cell_index
         ]
 

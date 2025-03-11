@@ -2,7 +2,6 @@ from mpi4py import MPI
 
 import basix
 import dolfinx
-import numpy as np
 import pyvista
 import ufl
 from dolfinx.mesh import create_mesh
@@ -93,19 +92,10 @@ class StructuredGridReader:
         ordering = [0, 1, 3, 2, 4, 5, 7, 6]
 
         # Extract all cell connectivity data at once
-        cell_connectivity_raw = np.array(
-            [
-                [
-                    self.grid.GetCell(i).GetPointId(j)
-                    for j in range(self.grid.GetCell(i).GetNumberOfPoints())
-                ]
-                for i in range(num_cells)
-            ],
-            dtype=int,
-        )
-
-        # Apply ordering
-        self.cell_connectivity = cell_connectivity_raw[:, ordering]
+        for i in range(num_cells):
+            cell = self.grid.GetCell(i)  # Get the i-th cell
+            point_ids = [cell.GetPointId(j) for j in ordering]  # Extract connectivity
+            self.cell_connectivity.append(point_ids)
 
     def create_dolfinx_function(self):
         degree = 1  # Set polynomial degree

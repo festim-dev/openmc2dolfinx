@@ -42,8 +42,8 @@ class OpenMC2dolfinx(pyvista.VTKDataSetReader):
             raise AttributeError("cell_type must be defined in the child class")
 
         self.data = self.read()
-        # if not hasattr(self, "cell_connectivity"):
-        #     raise AttributeError("cell_connectivity must be defined in the child class")
+        if not hasattr(self, "cell_connectivity"):
+            raise AttributeError("cell_connectivity must be defined in the child class")
 
         degree = 1  # Set polynomial degree
 

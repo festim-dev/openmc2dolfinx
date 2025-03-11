@@ -11,7 +11,7 @@ from dolfinx.mesh import create_mesh
 __all__ = ["StructuredGridReader", "UnstructuredMeshReader"]
 
 
-class OpenMC2Dolfinx:
+class _OpenMC2Dolfinx:
     """
     Base OpenMC2Dolfinx Mesh Reader
 
@@ -80,7 +80,7 @@ class OpenMC2Dolfinx:
         return u
 
 
-class UnstructuredMeshReader(OpenMC2Dolfinx):
+class UnstructuredMeshReader(_OpenMC2Dolfinx):
     """
     Unstructured Mesh Reader
 
@@ -116,10 +116,12 @@ class UnstructuredMeshReader(OpenMC2Dolfinx):
         self.create_dolfinx_mesh(cell_type="tetrahedron")
 
 
-class StructuredGridReader(OpenMC2Dolfinx):
+class StructuredGridReader(_OpenMC2Dolfinx):
     """
-    Reads an OpenMC .vtk results file with an structured mesh and converts the
-    velocity data into a dolfinx.fem.Function
+    Structured Mesh Reader
+
+    Reads an OpenMC .vtk results file with Structured meshes and converts the data
+    into a dolfinx.fem.Function
 
         Args:
             filename: the filename
@@ -128,6 +130,7 @@ class StructuredGridReader(OpenMC2Dolfinx):
             filename: the filename
             grid: the mesh and results from the OpenMC .vtk file
             connectivity: The OpenMC mesh cell connectivity
+            dolfinx_mesh: the dolfinx mesh
     """
 
     filename: str

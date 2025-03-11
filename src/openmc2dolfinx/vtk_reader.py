@@ -39,8 +39,15 @@ class UnstructuredMeshReader:
         # Extract connectivity information
         self.cell_connectivity = self.grid.cells_dict[10]
 
-    def create_dolfinx_fucntion(self):
-        """reads the filename of the OpenMC file"""
+    def create_dolfinx_fucntion(self, data: str = "mean"):
+        """reads the filename of the OpenMC file
+
+        args:
+            data: the name of the data to extract from the vtk file
+
+        returns:
+            dolfinx function with openmc results mapped
+        """
 
         degree = 1  # Set polynomial degree
         cell = ufl.Cell("tetrahedron")
@@ -55,6 +62,10 @@ class UnstructuredMeshReader:
         )
         function_space = dolfinx.fem.functionspace(dolfinx_mesh, ("DG", 0))
         u = dolfinx.fem.Function(function_space)
+
+        u.x.array[:] = self.grid.cell_data[f"{data}"][
+            self.dolfinx_mesh.topology.original_cell_index
+        ]
 
         return u
 

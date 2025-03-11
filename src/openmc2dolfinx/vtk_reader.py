@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 from mpi4py import MPI
 
 import basix
@@ -11,18 +13,13 @@ from dolfinx.mesh import create_mesh
 __all__ = ["StructuredGridReader", "UnstructuredMeshReader"]
 
 
-class OpenMC2dolfinx:
+class OpenMC2dolfinx(ABC):
     """
     Base OpenMC2Dolfinx Mesh Reader
 
-    Reads an OpenMC .vtk results file mesh and converts the data into a
-    dolfinx.fem.Function
-
-    Args:
-        filename: the filename
+    Converts OpenMC results data into a dolfinx.fem.Function
 
     Attributes:
-        filename: the filename
         grid: the mesh and results from the OpenMC .vtk file
         connectivity: The OpenMC mesh cell connectivity
         dolfinx_mesh: the dolfinx mesh
@@ -32,10 +29,10 @@ class OpenMC2dolfinx:
     connectivity: np.ndarray
     dolfinx_mesh: dolfinx.mesh.Mesh
 
-    def __init__(self):
-        self.grid = None
-        self.cell_connectivity = None
-        self.dolfinx_mesh = None
+    @abstractmethod
+    def read_vtk_file(self):
+        """Abstract method that must be implemented by subclasses"""
+        pass
 
     def create_dolfinx_mesh(self, cell_type: str = "tetrahedron"):
         """Creates the dolfinx mesh depending on the type of cell provided
@@ -94,10 +91,6 @@ class UnstructuredMeshReader(OpenMC2dolfinx):
 
     filename: str
 
-    grid: pyvista.core.pointset.UnstructuredGrid
-    connectivity: np.ndarray
-    dolfinx_mesh: dolfinx.mesh.Mesh
-
     def __init__(self, filename):
         self.filename = filename
 
@@ -134,10 +127,6 @@ class StructuredGridReader(OpenMC2dolfinx):
     """
 
     filename: str
-
-    grid: pyvista.core.pointset.StructuredGrid
-    connectivity: np.ndarray
-    dolfinx_mesh: dolfinx.mesh.Mesh
 
     def __init__(self, filename):
         self.filename = filename

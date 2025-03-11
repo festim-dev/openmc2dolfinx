@@ -6,6 +6,6 @@ except Exception:
     __version__ = "unknown"
 
 
-from .vtk_reader import StructuredGridReader, UnstructuredMeshReader
+from .core import StructuredGridReader, UnstructuredMeshReader
 
 __all__ = ["StructuredGridReader, UnstructuredMeshReader"]

@@ -24,7 +24,7 @@ def test_read_and_generation_of_dolfinx_function_from_structured_grid(tmpdir):
     filename = str(tmpdir.join("original.vtk"))
     grid.save(filename)
 
-    reader = StructuredGridReader(filename=filename)
+    reader = StructuredGridReader(filename)
     dolfinx_function = reader.create_dolfinx_function()
 
     assert isinstance(dolfinx_function, fem.Function)

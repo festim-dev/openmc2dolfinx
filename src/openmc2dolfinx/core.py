@@ -72,7 +72,7 @@ class OpenMC2dolfinx(ABC):
         return u
 
 
-class UnstructuredMeshReader(OpenMC2dolfinx):
+class UnstructuredMeshReader(OpenMC2dolfinx, pyvista.VTKDataSetReader):
     """
     Unstructured Mesh Reader
 
@@ -89,27 +89,25 @@ class UnstructuredMeshReader(OpenMC2dolfinx):
         dolfinx_mesh: the dolfinx mesh
     """
 
-    filename: str
-
-    def __init__(self, filename):
-        self.filename = filename
-
+    def __init__(self, path):
+        super().__init__(path)
         self.read_vtk_file()
+
+    @property
+    def cell_connectivity(self):
+        return self.grid.cells_dict[10]
 
     def read_vtk_file(self):
         """reads the filename of the OpenMC file, extracts the data, creates the cell
         connectivity between the openmc mesh and the dolfinx mesh and finally creates
         the dolfinx mesh"""
 
-        self.grid = pyvista.read(self.filename)
-
-        # Extract connectivity information
-        self.cell_connectivity = self.grid.cells_dict[10]
+        self.grid = self.read()
 
         self.create_dolfinx_mesh(cell_type="tetrahedron")
 
 
-class StructuredGridReader(OpenMC2dolfinx):
+class StructuredGridReader(OpenMC2dolfinx, pyvista.VTKDataSetReader):
     """
     Structured Mesh Reader
 
@@ -126,20 +124,11 @@ class StructuredGridReader(OpenMC2dolfinx):
         dolfinx_mesh: the dolfinx mesh
     """
 
-    filename: str
-
-    def __init__(self, filename):
-        self.filename = filename
-
+    def __init__(self, path):
+        super().__init__(path)
         self.read_vtk_file()
 
-    def read_vtk_file(self):
-        """reads the filename of the OpenMC file, extracts the data, creates the cell
-        connectivity between the openmc mesh and the dolfinx mesh and finally creates
-        the dolfinx mesh"""
-
-        self.grid = pyvista.read(self.filename)
-
+    def get_connectivity(self):
         num_cells = self.grid.GetNumberOfCells()
 
         # Extract connectivity information
@@ -153,4 +142,12 @@ class StructuredGridReader(OpenMC2dolfinx):
             point_ids = [cell.GetPointId(j) for j in ordering]  # Extract connectivity
             self.cell_connectivity.append(point_ids)
 
+    def read_vtk_file(self):
+        """reads the filename of the OpenMC file, extracts the data, creates the cell
+        connectivity between the openmc mesh and the dolfinx mesh and finally creates
+        the dolfinx mesh"""
+
+        self.grid = self.read()
+
+        self.get_connectivity()
         self.create_dolfinx_mesh(cell_type="hexahedron")

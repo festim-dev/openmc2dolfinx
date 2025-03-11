@@ -32,7 +32,7 @@ def test_read_and_generation_of_dolfinx_function_from_unstructured_mesh(tmpdir):
     filename = str(tmpdir.join("original_unstructured.vtk"))
     grid.save(filename)
 
-    reader = UnstructuredMeshReader(filename=filename)
+    reader = UnstructuredMeshReader(filename)
     dolfinx_function = reader.create_dolfinx_function()
 
     assert isinstance(dolfinx_function, fem.Function)

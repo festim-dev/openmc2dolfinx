@@ -55,7 +55,10 @@ class OpenMC2dolfinx(pyvista.VTKDataSetReader):
         # Create dolfinx Mesh
         mesh_ufl = ufl.Mesh(mesh_element)
         self.dolfinx_mesh = create_mesh(
-            MPI.COMM_WORLD, self.cell_connectivity, self._data.points, mesh_ufl
+            comm=MPI.COMM_WORLD,
+            cells=self.cell_connectivity,
+            x=self._data.points,
+            e=mesh_ufl,
         )
 
     def create_dolfinx_function(self, data: str = "mean") -> dolfinx.fem.Function:

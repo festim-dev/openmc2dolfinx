@@ -21,12 +21,12 @@ class OpenMC2dolfinx(pyvista.VTKDataSetReader):
         path: the path to the OpenMC .vtk file
 
     Attributes:
-        _data: the mesh and results from the OpenMC .vtk file
+        data: the mesh and results from the OpenMC .vtk file
         connectivity: The OpenMC mesh cell connectivity
         dolfinx_mesh: the dolfinx mesh
     """
 
-    _data: pyvista.core.pointset.UnstructuredGrid | pyvista.core.pointset.StructuredGrid
+    data: pyvista.core.pointset.UnstructuredGrid | pyvista.core.pointset.StructuredGrid
     connectivity: np.ndarray
     dolfinx_mesh: dolfinx.mesh.Mesh = None
 
@@ -41,7 +41,7 @@ class OpenMC2dolfinx(pyvista.VTKDataSetReader):
         if not hasattr(self, "cell_type"):
             raise AttributeError("cell_type must be defined in the child class")
 
-        self._data = self.read()
+        pyvista.set_new_attribute(self, "data", self.read())
         if not hasattr(self, "cell_connectivity"):
             raise AttributeError("cell_connectivity must be defined in the child class")
 
@@ -57,7 +57,7 @@ class OpenMC2dolfinx(pyvista.VTKDataSetReader):
         self.dolfinx_mesh = create_mesh(
             comm=MPI.COMM_WORLD,
             cells=self.cell_connectivity,
-            x=self._data.points,
+            x=self.data.points,
             e=mesh_ufl,
         )
 
@@ -77,7 +77,7 @@ class OpenMC2dolfinx(pyvista.VTKDataSetReader):
         function_space = dolfinx.fem.functionspace(self.dolfinx_mesh, ("DG", 0))
         u = dolfinx.fem.Function(function_space)
 
-        u.x.array[:] = self._data.cell_data[f"{data}"][
+        u.x.array[:] = self.data.cell_data[f"{data}"][
             self.dolfinx_mesh.topology.original_cell_index
         ]
 
@@ -104,7 +104,7 @@ class UnstructuredMeshReader(OpenMC2dolfinx):
 
     @property
     def cell_connectivity(self):
-        return self._data.cells_dict[10]
+        return self.data.cells_dict[10]
 
 
 class StructuredGridReader(OpenMC2dolfinx):
@@ -127,8 +127,8 @@ class StructuredGridReader(OpenMC2dolfinx):
     _cell_connectivity = None
 
     def get_connectivity(self):
-        num_cells = self._data.GetNumberOfCells()
-        assert self._data.GetCellType(0) == 12, "Only hexahedron cells are supported"
+        num_cells = self.data.GetNumberOfCells()
+        assert self.data.GetCellType(0) == 12, "Only hexahedron cells are supported"
 
         # Extract connectivity information
         ordering = [0, 1, 3, 2, 4, 5, 7, 6]
@@ -138,7 +138,7 @@ class StructuredGridReader(OpenMC2dolfinx):
         # TODO numpify this
         # Extract all cell connectivity data at once
         for i in range(num_cells):
-            cell = self._data.GetCell(i)  # Get the i-th cell
+            cell = self.data.GetCell(i)  # Get the i-th cell
             point_ids = [cell.GetPointId(j) for j in ordering]  # Extract connectivity
             self._cell_connectivity.append(point_ids)
 

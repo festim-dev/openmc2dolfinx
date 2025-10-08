@@ -4,9 +4,18 @@
 [![Docker CI](https://github.com/festim-dev/openmc2dolfinx/actions/workflows/ci_docker.yml/badge.svg)](https://github.com/festim-dev/openmc2dolfinx/actions/workflows/ci_docker.yml)
 [![Code style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-`openmc2dolfinx` is a tool for converting OpenMC output `.vtk` files to functions that can be used within [dolfinx](https://github.com/FEniCS/dolfinx).
+`openmc2dolfinx` is a lightweight tool for converting [OpenMC](https://github.com/openmc-dev/openmc) output data (in `.vtk` format) into [dolfinx](https://github.com/FEniCS/dolfinx)-compatible `fem.Function` objects.
+It is primarily designed to facilitate multiphysics coupling between OpenMC and finite element simulations (e.g. thermal, diffusion, or tritium transport analyses).
+
+## Key features
+
+ - Convert structured and unstructured VTK meshes to dolfinx meshes.
+ - Interpolate OpenMC tally results directly into dolfinx Function spaces.
+ - Integrated with PyVista for mesh and data inspection.
 
 ## Installation
+
+Using **conda**:
 
 ```bash
 conda create -n openmc2dolfinx-env
@@ -18,7 +27,8 @@ Once in the created in environment:
 python -m pip install openmc2dolfinx
 ```
 
-## Exmaple usage
+## Example usage
+
 ```python
 from openmc2dolfinx import StructuredGridReader, UnstructuredMeshReader
 import pyvista as pv

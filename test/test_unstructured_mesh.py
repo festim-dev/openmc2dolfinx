@@ -5,7 +5,7 @@ from dolfinx import fem
 from mpi4py import MPI
 import pytest
 
-from openmc2dolfinx import UnstructuredMeshReader
+from openmc2dolfinx import UnstructuredMeshReader, VTKHDFUnstructuredMeshReader
 
 
 @pytest.fixture
@@ -96,3 +96,37 @@ def test_download_from_pyvista_examples(tmpdir):
     # export to vtk for visualisation
     writer = dolfinx.io.VTXWriter(MPI.COMM_WORLD, tmpdir + "/out.bp", u, "BP5")
     writer.write(t=0)
+
+
+def test_vtkhdf_unstructured_mesh_reader(tmpdir, unstructured_mesh):
+    """Test VTKHDFUnstructuredMeshReader with VTKHDF format files."""
+    # save to vtkhdf file
+    filename = str(tmpdir.join("test_mesh.vtkhdf"))
+    unstructured_mesh.save(filename)
+
+    reader = VTKHDFUnstructuredMeshReader(filename)
+    dolfinx_function = reader.create_dolfinx_function()
+
+    assert isinstance(dolfinx_function, fem.Function)
+
+
+def test_vtkhdf_reader_with_pyvista_example(tmpdir):
+    """Test VTKHDFUnstructuredMeshReader with a larger example mesh."""
+    # download an example tetmesh
+    filename = pv.examples.download_tetrahedron(load=False)
+
+    grid = pv.read(filename)
+    grid.cell_data["mean"] = np.arange(grid.n_cells)
+
+    # save as vtkhdf
+    vtkhdf_file = str(tmpdir.join("example.vtkhdf"))
+    grid.save(vtkhdf_file)
+
+    # read the vtkhdf file
+    reader = VTKHDFUnstructuredMeshReader(vtkhdf_file)
+
+    # make a dolfinx function
+    u = reader.create_dolfinx_function("mean")
+
+    assert isinstance(u, fem.Function)
+    assert u.function_space.mesh.topology.dim == 3

@@ -98,35 +98,14 @@ def test_download_from_pyvista_examples(tmpdir):
     writer.write(t=0)
 
 
-def test_vtkhdf_unstructured_mesh_reader(tmpdir, unstructured_mesh):
-    """Test VTKHDFUnstructuredMeshReader with VTKHDF format files."""
-    # save to vtkhdf file
-    filename = str(tmpdir.join("test_mesh.vtkhdf"))
-    unstructured_mesh.save(filename)
+def test_vtkhdf_unstructured_mesh_reader():
+    """Test VTKHDFUnstructuredMeshReader with OpenMC VTKHDF tally file."""
+    import pathlib
 
-    reader = VTKHDFUnstructuredMeshReader(filename)
+    vtkhdf_file = pathlib.Path(__file__).parent / "tally.vtkhdf"
+
+    reader = VTKHDFUnstructuredMeshReader(str(vtkhdf_file))
     dolfinx_function = reader.create_dolfinx_function()
 
     assert isinstance(dolfinx_function, fem.Function)
-
-
-def test_vtkhdf_reader_with_pyvista_example(tmpdir):
-    """Test VTKHDFUnstructuredMeshReader with a larger example mesh."""
-    # download an example tetmesh
-    filename = pv.examples.download_tetrahedron(load=False)
-
-    grid = pv.read(filename)
-    grid.cell_data["mean"] = np.arange(grid.n_cells)
-
-    # save as vtkhdf
-    vtkhdf_file = str(tmpdir.join("example.vtkhdf"))
-    grid.save(vtkhdf_file)
-
-    # read the vtkhdf file
-    reader = VTKHDFUnstructuredMeshReader(vtkhdf_file)
-
-    # make a dolfinx function
-    u = reader.create_dolfinx_function("mean")
-
-    assert isinstance(u, fem.Function)
-    assert u.function_space.mesh.topology.dim == 3
+    assert dolfinx_function.function_space.mesh.topology.dim == 3

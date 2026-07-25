@@ -47,10 +47,10 @@ class OpenMC2dolfinx(pyvista.VTKDataSetReader):
 
         degree = 1  # Set polynomial degree
 
-        cell = ufl.Cell(f"{self.cell_type}")
-        mesh_element = basix.ufl.element(
-            "Lagrange", cell.cellname(), degree, shape=(3,)
-        )
+        # cell_type is already a cell name, pass it straight to basix. Going
+        # through ufl.Cell().cellname() breaks with ufl >= 2025.3.0, where
+        # Cell.cellname became a property rather than a method.
+        mesh_element = basix.ufl.element("Lagrange", self.cell_type, degree, shape=(3,))
 
         # Create dolfinx Mesh
         mesh_ufl = ufl.Mesh(mesh_element)

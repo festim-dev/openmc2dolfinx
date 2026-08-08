@@ -8,7 +8,7 @@ import pyvista.core.pointset
 import ufl
 from dolfinx.mesh import create_mesh
 
-__all__ = ["StructuredGridReader", "UnstructuredMeshReader"]
+__all__ = ["StructuredGridReader", "UnstructuredMeshReader", "VTKHDFUnstructuredMeshReader"]
 
 
 class OpenMC2dolfinx(pyvista.VTKDataSetReader):
@@ -147,3 +147,83 @@ class StructuredGridReader(OpenMC2dolfinx):
         if self._cell_connectivity is None:
             self.get_connectivity()
         return self._cell_connectivity
+
+
+class VTKHDFUnstructuredMeshReader:
+    """
+    VTKHDF Unstructured Mesh Reader
+
+    Reads an OpenMC .vtkhdf results file with unstructured meshes and converts
+    the data into a dolfinx.fem.Function
+
+    Args:
+        path: the path to the OpenMC .vtkhdf file
+
+    Attributes:
+        data: the mesh and results from the OpenMC .vtkhdf file
+        dolfinx_mesh: the dolfinx mesh
+
+    Example:
+    .. code-block:: python
+        reader = VTKHDFUnstructuredMeshReader("path/to/file.vtkhdf")
+        dolfinx_function = reader.create_dolfinx_function()
+    """
+
+    cell_type = "tetrahedron"
+
+    def __init__(self, path: str):
+        self.path = path
+        self.data: pyvista.core.pointset.UnstructuredGrid | None = None
+        self.dolfinx_mesh: dolfinx.mesh.Mesh | None = None
+
+    def read(self) -> pyvista.core.pointset.UnstructuredGrid:
+        """Reads the VTKHDF file using pyvista."""
+        self.data = pyvista.read(self.path)
+        return self.data
+
+    @property
+    def cell_connectivity(self) -> np.ndarray:
+        """Returns the cell connectivity for tetrahedra (VTK cell type 10)."""
+        if self.data is None:
+            self.read()
+        return self.data.cells_dict[10]
+
+    def create_dolfinx_mesh(self):
+        """Creates the dolfinx mesh from the VTKHDF data."""
+        if self.data is None:
+            self.read()
+
+        degree = 1
+        cell = ufl.Cell(self.cell_type)
+        mesh_element = basix.ufl.element(
+            "Lagrange", cell.cellname(), degree, shape=(3,)
+        )
+
+        mesh_ufl = ufl.Mesh(mesh_element)
+        self.dolfinx_mesh = create_mesh(
+            comm=MPI.COMM_WORLD,
+            cells=self.cell_connectivity,
+            x=self.data.points,
+            e=mesh_ufl,
+        )
+
+    def create_dolfinx_function(self, data: str = "mean") -> dolfinx.fem.Function:
+        """Converts VTKHDF cell data to a dolfinx Function.
+
+        Arguments:
+            data: the name of the cell data array to extract (default: "mean")
+
+        Returns:
+            dolfinx function with OpenMC results mapped
+        """
+        if self.dolfinx_mesh is None:
+            self.create_dolfinx_mesh()
+
+        function_space = dolfinx.fem.functionspace(self.dolfinx_mesh, ("DG", 0))
+        u = dolfinx.fem.Function(function_space)
+
+        u.x.array[:] = self.data.cell_data[data][
+            self.dolfinx_mesh.topology.original_cell_index
+        ]
+
+        return u

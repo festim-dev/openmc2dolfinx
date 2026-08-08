@@ -5,7 +5,7 @@ from dolfinx import fem
 from mpi4py import MPI
 import pytest
 
-from openmc2dolfinx import UnstructuredMeshReader
+from openmc2dolfinx import UnstructuredMeshReader, VTKHDFUnstructuredMeshReader
 
 
 @pytest.fixture
@@ -96,3 +96,16 @@ def test_download_from_pyvista_examples(tmpdir):
     # export to vtk for visualisation
     writer = dolfinx.io.VTXWriter(MPI.COMM_WORLD, tmpdir + "/out.bp", u, "BP5")
     writer.write(t=0)
+
+
+def test_vtkhdf_unstructured_mesh_reader():
+    """Test VTKHDFUnstructuredMeshReader with OpenMC VTKHDF tally file."""
+    import pathlib
+
+    vtkhdf_file = pathlib.Path(__file__).parent / "tally.vtkhdf"
+
+    reader = VTKHDFUnstructuredMeshReader(str(vtkhdf_file))
+    dolfinx_function = reader.create_dolfinx_function()
+
+    assert isinstance(dolfinx_function, fem.Function)
+    assert dolfinx_function.function_space.mesh.topology.dim == 3
